@@ -37,6 +37,26 @@
         .controls {
             margin: 20px 0;
         }
+
+        .hidden {
+            display: none;
+        }
+
+        .progress-bar {
+            margin: 20px auto;
+            width: 80%;
+            height: 20px;
+            background-color: #ddd;
+            border: 1px solid #aaa;
+            position: relative;
+        }
+
+        .progress-bar .progress {
+            height: 100%;
+            background-color: #4caf50;
+            width: 0;
+            transition: width 0.2s ease;
+        }
     </style>
 </head>
 
@@ -56,14 +76,54 @@
             <option value="two-friends">Règle 2 : Propagation à deux amis (question 4)</option>
         </select>
     </div>
+    <div class="controls">
+        <label for="simulations">Nombre de tours par case de simulation :</label>
+        <input type="number" id="simulations" min="1" value="5">
+        <button onclick="generateGrid(); runSimulations()">Lancer les simulation (attention, à partir de 50 c'est un peu
+            long)</button>
+    </div>
+    <div class="progress-bar">
+        <div class="progress" id="progress"></div>
+    </div>
     <p>Cliquez sur un lutin pour le rendre joyeux (premier joyeux).</p>
-    <div id="grid" class="grid"></div>
+    <div id="grid" class="grid"> </div>
     <button onclick="simulateDay()">Simuler un jour</button>
 
     <script>
         let grid = [];
         let rows = 5;
         let columns = 5;
+        let isSimulating = false;
+        let stopSimulation = false;
+
+
+        // Récupérer les valeurs depuis le localStorage
+        function loadFromLocalStorage() {
+            const savedRows = localStorage.getItem('rows');
+            const savedColumns = localStorage.getItem('columns');
+            const savedRule = localStorage.getItem('rules');
+            const savedSimulations = localStorage.getItem('simulations');
+
+            if (savedRows) document.getElementById('rows').value = savedRows;
+            if (savedColumns) document.getElementById('columns').value = savedColumns;
+            if (savedRule) document.getElementById('rules').value = savedRule;
+            if (savedSimulations) document.getElementById('simulations').value = savedSimulations;
+        }
+
+        // Sauvegarder les valeurs dans le localStorage
+        function saveToLocalStorage() {
+            localStorage.setItem('rows', document.getElementById('rows').value);
+            localStorage.setItem('columns', document.getElementById('columns').value);
+            localStorage.setItem('rules', document.getElementById('rules').value);
+            localStorage.setItem('simulations', document.getElementById('simulations').value);
+        }
+
+        // Event listeners pour sauvegarder les valeurs lorsque l'utilisateur les modifie
+        document.getElementById('rows').addEventListener('input', saveToLocalStorage);
+        document.getElementById('columns').addEventListener('input', saveToLocalStorage);
+        document.getElementById('rules').addEventListener('change', saveToLocalStorage);
+        document.getElementById('simulations').addEventListener('input', saveToLocalStorage);
+
 
         function generateGrid() {
             const gridContainer = document.getElementById("grid");
@@ -74,6 +134,17 @@
             gridContainer.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
             gridContainer.style.width = `${42 * columns}px`;
             gridContainer.innerHTML = "";
+
+            const clickBlocker = document.createElement("div");
+            clickBlocker.style.backgroundColor = `black`
+            clickBlocker.style.height = `${42 * rows}px`
+            clickBlocker.style.width = `${42 * columns}px`;
+            clickBlocker.style.position = `absolute`;
+            clickBlocker.style.zIndex = `10`;
+            clickBlocker.style.opacity = `0.3`;
+            clickBlocker.classList.add("hidden")
+
+            gridContainer.appendChild(clickBlocker)
 
             grid = Array.from({ length: rows }, () => Array(columns).fill(false));
 
@@ -90,9 +161,10 @@
         }
 
         function setInitialHappy(row, column) {
-            // Reset all cells and grid states
+            console.log(row, column)
+            // Reset all cells and grid states by regenerating the grid
+            generateGrid();
             grid = Array.from({ length: rows }, () => Array(columns).fill(false));
-            document.querySelectorAll(".cell").forEach(cell => cell.classList.remove("happy"));
 
             // Set new happy cell
             grid[row][column] = true;
@@ -143,7 +215,140 @@
             });
         }
 
-        // Initial grid generation
+        async function runSimulations() {
+            // Vérifier si une simulation est déjà en cours
+            if (isSimulating) {
+                stopSimulation = true; // Demande d'arrêt pour la simulation précédente
+                await new Promise(resolve => setTimeout(resolve, 50)); // Pause pour laisser la précédente s'arrêter
+            }
+
+            // Démarrer une nouvelle simulation
+            isSimulating = true;
+            stopSimulation = false;
+
+            const numSimulations = parseInt(document.getElementById("simulations").value);
+            const rule = document.getElementById("rules").value;
+            const progressBar = document.getElementById("progress");
+            let totalSimulations = 0;
+            const totalCells = rows * columns;
+            const maxSimulations = numSimulations * totalCells;
+
+            // Empêcher l'interaction avec la grille pendant les simulations
+            document.querySelectorAll(".cell").forEach(cell => {
+                cell.style.pointerEvents = "none";
+            });
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < columns; c++) {
+                    if (stopSimulation) {
+                        isSimulating = false; // Arrêter la simulation
+                        progressBar.style.width = "0%";
+                        return;
+                    }
+
+                    let minDays = Infinity;
+
+                    for (let simulation = 0; simulation < numSimulations; simulation++) {
+                        if (stopSimulation) {
+                            isSimulating = false; // Arrêter la simulation
+                            progressBar.style.width = "0%";
+                            return;
+                        }
+
+                        let currentGrid = Array.from({ length: rows }, () => Array(columns).fill(false));
+                        let currentDays = 0;
+                        let filled = 0;
+
+                        currentGrid[r][c] = true;
+                        filled = 1;
+
+                        while (filled < rows * columns) {
+                            if (stopSimulation) {
+                                isSimulating = false; // Arrêter la simulation
+                                progressBar.style.width = "0%";
+                                return;
+                            }
+
+                            currentDays++;
+                            const newGrid = currentGrid.map(row => [...row]);
+
+                            for (let tr = 0; tr < rows; tr++) {
+                                for (let tc = 0; tc < columns; tc++) {
+                                    if (currentGrid[tr][tc]) {
+                                        if (rule === "neighbors") {
+                                            if (tr > 0 && !newGrid[tr - 1][tc]) {
+                                                newGrid[tr - 1][tc] = true;
+                                                filled++;
+                                            }
+                                            if (tr < rows - 1 && !newGrid[tr + 1][tc]) {
+                                                newGrid[tr + 1][tc] = true;
+                                                filled++;
+                                            }
+                                            if (tc > 0 && !newGrid[tr][tc - 1]) {
+                                                newGrid[tr][tc - 1] = true;
+                                                filled++;
+                                            }
+                                            if (tc < columns - 1 && !newGrid[tr][tc + 1]) {
+                                                newGrid[tr][tc + 1] = true;
+                                                filled++;
+                                            }
+                                        } else if (rule === "two-friends") {
+                                            const neighbors = [];
+                                            if (tr > 0) neighbors.push([tr - 1, tc]);
+                                            if (tr < rows - 1) neighbors.push([tr + 1, tc]);
+                                            if (tc > 0) neighbors.push([tr, tc - 1]);
+                                            if (tc < columns - 1) neighbors.push([tr, tc + 1]);
+                                            neighbors.sort(() => Math.random() - 0.5);
+                                            neighbors.slice(0, 2).forEach(([nr, nc]) => {
+                                                if (!newGrid[nr][nc]) {
+                                                    newGrid[nr][nc] = true;
+                                                    filled++;
+                                                }
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+
+                            currentGrid = newGrid;
+                        }
+
+                        minDays = Math.min(minDays, currentDays);
+                        totalSimulations++;
+
+                        if (totalSimulations % 100 === 0 || simulation === numSimulations - 1) {
+                            const cell = document.querySelector(`.cell[data-row='${r}'][data-column='${c}']`);
+                            cell.textContent = minDays;
+                            cell.style.backgroundColor = "yellow";
+                            progressBar.style.width = `${(totalSimulations / maxSimulations) * 100}%`;
+
+                            await new Promise(resolve => setTimeout(resolve, 10)); // Pause pour mise à jour
+                        }
+                    }
+
+                    const cell = document.querySelector(`.cell[data-row='${r}'][data-column='${c}']`);
+                    cell.style.backgroundColor = "lightgreen";
+                }
+            }
+
+            isSimulating = false; // Simulation terminée
+            progressBar.style.width = "100%";
+
+            // Rétablir l'interaction avec la grille après les simulations
+            document.querySelectorAll(".cell").forEach(cell => {
+                const row = cell.dataset.row;
+                const column = cell.dataset.column;
+                cell.onclick = () => setInitialHappy(row, column);
+                cell.style.pointerEvents = "auto";
+            });
+        }
+
+
+
+
+        // Charger les données depuis localStorage à la première exécution
+        loadFromLocalStorage();
+
         generateGrid();
     </script>
 </body>

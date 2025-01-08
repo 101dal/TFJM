@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulation des Drôles de Toboggans</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+
+        .grid {
+            display: grid;
+            gap: 5px;
+            justify-content: center;
+            margin: 20px auto;
+        }
+
+        .toboggan {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #ccc;
+            border-radius: 30px;
+            position: relative;
+        }
+
+        .toboggan.type-I {
+            background-color: lightblue;
+        }
+
+        .toboggan.type-Z {
+            background-color: lightgreen;
+        }
+
+        .toboggan.type-X {
+            background-color: lightcoral;
+        }
+
+        .controls {
+            margin: 20px 0;
+        }
+
+        .output {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Simulation des Drôles de Toboggans</h1>
+
+    <div class="controls">
+        <label for="height">Hauteur (H) :</label>
+        <input type="number" id="height" min="1" value="3">
+        <label for="toboggans">Nombre de tuyaux (N) :</label>
+        <input type="number" id="toboggans" min="2" value="5">
+        <button onclick="generateToboggans()">Générer la tuyauterie</button>
+    </div>
+
+    <div class="grid" id="toboggan-grid"></div>
+
+    <div class="controls">
+        <label for="input-water">Répartition d'entrée (séparé par des virgules) :</label>
+        <input type="text" id="input-water" value="1, 0, 0, 0, 0" placeholder="ex: 1, 0, 0, 0, 0">
+        <button onclick="simulateFlow()">Simuler l'écoulement</button>
+    </div>
+
+    <div class="output" id="output"></div>
+
+    <script>
+        let height = 3;
+        let toboggans = 5;
+        let grid = [];
+
+        function generateToboggans() {
+            const gridContainer = document.getElementById("toboggan-grid");
+            height = parseInt(document.getElementById("height").value);
+            toboggans = parseInt(document.getElementById("toboggans").value);
+            gridContainer.style.gridTemplateColumns = `repeat(${toboggans}, auto)`;
+            gridContainer.innerHTML = "";
+
+            grid = Array.from({ length: height }, () => []);
+
+            for (let h = 0; h < height; h++) {
+                for (let t = 0; t < toboggans; t++) {
+                    const cell = document.createElement("div");
+                    cell.className = "toboggan";
+
+                    // Randomly assign types I, Z, X
+                    const type = ["type-I", "type-Z", "type-X"][Math.floor(Math.random() * 3)];
+                    cell.classList.add(type);
+                    cell.dataset.type = type;
+                    grid[h].push(type);
+
+                    gridContainer.appendChild(cell);
+                }
+            }
+        }
+
+        function simulateFlow() {
+            const inputWater = document.getElementById("input-water").value.split(",").map(Number);
+            if (inputWater.length !== toboggans) {
+                alert("Veuillez entrer une répartition correcte correspondant au nombre de tuyaux.");
+                return;
+            }
+
+            let water = [...inputWater];
+            let outputHTML = `<h3>Répartition de l'eau à chaque étage :</h3>`;
+
+            for (let h = 0; h < height; h++) {
+                const newWater = Array(toboggans).fill(0);
+                for (let t = 0; t < toboggans; t++) {
+                    if (grid[h][t] === "type-I") {
+                        newWater[t] += water[t];
+                    } else if (grid[h][t] === "type-Z" && t < toboggans - 1) {
+                        newWater[t] += water[t + 1];
+                        newWater[t + 1] += water[t];
+                    } else if (grid[h][t] === "type-X" && t < toboggans - 1) {
+                        const sum = water[t] + water[t + 1];
+                        newWater[t] += sum / 2;
+                        newWater[t + 1] += sum / 2;
+                    }
+                }
+                water = newWater;
+                outputHTML += `<p>Étage ${h + 1} : [${water.join(", ")}]</p>`;
+            }
+
+            document.getElementById("output").innerHTML = outputHTML;
+        }
+
+        // Initial grid generation
+        generateToboggans();
+    </script>
+</body>
+
+</html>
