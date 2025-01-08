@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page d'accueil</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        nav {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        nav a {
+            margin: 10px 0;
+            text-decoration: none;
+            font-size: 1.2rem;
+            padding: 10px 20px;
+            border: 2px solid;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        nav a.unactive {
+            color: #FF0000;
+            background-color: #ff000028;
+            border-color: #FF0000;
+        }
+        nav a.active {
+            color: #008000;
+            background-color: #0080002a;
+            border-color: #008000;
+        }
+        nav a:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="./problème 1.html" class="active">Problème 1</a>
+        <a href="#" class="unactive">Problème 2</a>
+        <a href="#" class="unactive">Problème 3</a>
+        <a href="#" class="unactive">Problème 4</a>
+        <a href="#" class="unactive">Problème 5</a>
+        <a href="#" class="unactive">Problème 6</a>
+        <a href="#" class="unactive">Problème 7</a>
+        <a href="#" class="unactive">Problème 8</a>
+    </nav>
+</body>
+</html>
