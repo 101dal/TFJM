@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Propagation de la Bonne Humeur</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+
+        .grid {
+            display: grid;
+            margin: 20px auto;
+            gap: 1px;
+            justify-content: center;
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: lightgray;
+            border: 1px solid #ccc;
+            cursor: pointer;
+        }
+
+        .cell.happy {
+            background-color: yellow;
+        }
+
+        .controls {
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Propagation de la Bonne Humeur</h1>
+    <div class="controls">
+        <label for="rows">Nombre de lignes :</label>
+        <input type="number" id="rows" min="2" value="5">
+        <label for="columns">Nombre de colonnes :</label>
+        <input type="number" id="columns" min="2" value="5">
+        <button onclick="generateGrid()">Générer la grille</button>
+    </div>
+    <div class="controls">
+        <label for="rules">Règle de propagation :</label>
+        <select id="rules">
+            <option value="neighbors">Règle 1 : Propagation aux voisins (question 1)</option>
+            <option value="two-friends">Règle 2 : Propagation à deux amis (question 4)</option>
+        </select>
+    </div>
+    <p>Cliquez sur un lutin pour le rendre joyeux (premier joyeux).</p>
+    <div id="grid" class="grid"></div>
+    <button onclick="simulateDay()">Simuler un jour</button>
+
+    <script>
+        let grid = [];
+        let rows = 5;
+        let columns = 5;
+
+        function generateGrid() {
+            const gridContainer = document.getElementById("grid");
+            rows = parseInt(document.getElementById("rows").value);
+            columns = parseInt(document.getElementById("columns").value);
+            gridContainer.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+            gridContainer.style.height = `${42 * rows}px`;
+            gridContainer.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
+            gridContainer.style.width = `${42 * columns}px`;
+            gridContainer.innerHTML = "";
+
+            grid = Array.from({ length: rows }, () => Array(columns).fill(false));
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < columns; c++) {
+                    const cell = document.createElement("div");
+                    cell.className = "cell";
+                    cell.dataset.row = r;
+                    cell.dataset.column = c;
+                    cell.onclick = () => setInitialHappy(r, c);
+                    gridContainer.appendChild(cell);
+                }
+            }
+        }
+
+        function setInitialHappy(row, column) {
+            // Reset all cells and grid states
+            grid = Array.from({ length: rows }, () => Array(columns).fill(false));
+            document.querySelectorAll(".cell").forEach(cell => cell.classList.remove("happy"));
+
+            // Set new happy cell
+            grid[row][column] = true;
+            document.querySelector(`.cell[data-row='${row}'][data-column='${column}']`).classList.add("happy");
+        }
+
+        function simulateDay() {
+            const rule = document.getElementById("rules").value;
+            const newGrid = grid.map(row => [...row]); // Copy the grid
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < columns; c++) {
+                    if (grid[r][c]) {
+                        if (rule === "neighbors") {
+                            // Spread happiness to neighbors
+                            if (r > 0) newGrid[r - 1][c] = true; // Top
+                            if (r < rows - 1) newGrid[r + 1][c] = true; // Bottom
+                            if (c > 0) newGrid[r][c - 1] = true; // Left
+                            if (c < columns - 1) newGrid[r][c + 1] = true; // Right
+                        } else if (rule === "two-friends") {
+                            // Spread happiness to exactly two friends
+                            const neighbors = [];
+                            if (r > 0) neighbors.push([r - 1, c]);
+                            if (r < rows - 1) neighbors.push([r + 1, c]);
+                            if (c > 0) neighbors.push([r, c - 1]);
+                            if (c < columns - 1) neighbors.push([r, c + 1]);
+                            neighbors.sort(() => Math.random() - 0.5); // Shuffle neighbors
+                            neighbors.slice(0, 2).forEach(([nr, nc]) => {
+                                newGrid[nr][nc] = true;
+                            });
+                        }
+                    }
+                }
+            }
+
+            grid = newGrid;
+            updateGridDisplay();
+        }
+
+        function updateGridDisplay() {
+            const cells = document.querySelectorAll(".cell");
+            cells.forEach(cell => {
+                const row = parseInt(cell.dataset.row);
+                const column = parseInt(cell.dataset.column);
+                if (grid[row][column]) {
+                    cell.classList.add("happy");
+                }
+            });
+        }
+
+        // Initial grid generation
+        generateGrid();
+    </script>
+</body>
+
+</html>
