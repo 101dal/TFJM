@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulation de Papillons</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid #ddd;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            text-align: center;
+        }
+
+        select,
+        input {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Simulation de Transformation des Papillons</h1>
+        <form id="simulationForm">
+            <label for="numberOfButterflies">Nombre de papillons (N) :</label>
+            <input type="number" id="numberOfButterflies" name="numberOfButterflies" min="1" value="3" required>
+            <br>
+            <label for="ruleSelection">Règle de transformation :</label>
+            <select id="ruleSelection" name="ruleSelection">
+                <option value="rule1">Règle 1 : Division par 2</option>
+                <option value="rule2">Règle 2 : Alternance médiane</option>
+                <option value="rule3">Règle 3 : Multiplication par 2</option>
+                <option value="rule4">Règle 4 : Transformation en 2 (80% et 125%)</option>
+                <option value="rule5">Règle 5 : Transformation grand-parent</option>
+            </select>
+            <br>
+            <label for="maxDays">Nombre maximal de jours :</label>
+            <input type="number" id="maxDays" name="maxDays" min="1" value="10" required>
+            <br>
+            <button type="submit">Lancer la simulation</button>
+        </form>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        // Récupérer les valeurs depuis le localStorage
+        function loadFromLocalStorage() {
+            const savedNumberOfButterflies = localStorage.getItem('numberOfButterflies');
+            const savedmaxDays = localStorage.getItem('maxDays');
+            const savedruleSelection = localStorage.getItem('ruleSelection');
+
+            if (savedNumberOfButterflies) document.getElementById('numberOfButterflies').value = savedNumberOfButterflies;
+            if (savedmaxDays) document.getElementById('maxDays').value = savedmaxDays;
+            if (savedruleSelection) document.getElementById('ruleSelection').value = savedruleSelection;
+        }
+
+        // Sauvegarder les valeurs dans le localStorage
+        function saveToLocalStorage() {
+            localStorage.setItem('numberOfButterflies', document.getElementById('numberOfButterflies').value);
+            localStorage.setItem('maxDays', document.getElementById('maxDays').value);
+            localStorage.setItem('ruleSelection', document.getElementById('ruleSelection').value);
+        }
+
+        // Event listeners pour sauvegarder les valeurs lorsque l'utilisateur les modifie
+        document.getElementById('numberOfButterflies').addEventListener('input', saveToLocalStorage);
+        document.getElementById('maxDays').addEventListener('input', saveToLocalStorage);
+        document.getElementById('ruleSelection').addEventListener('change', saveToLocalStorage);
+
+        /**
+         * Fonction pour calculer la médiane
+         * @param {Array} arr - Tableau de valeurs
+         * @returns {number} - Valeur médiane
+         */
+        function median(arr) {
+            const sorted = [...arr].sort((a, b) => a - b);
+            const mid = Math.floor(sorted.length / 2);
+            return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+        }
+
+        /**
+         * Appliquer les règles de transformation
+         */
+        function applyTransformationRule(butterflies, rule, day) {
+            switch (rule) {
+                case 'rule1':
+                    const maxIndex = butterflies.indexOf(Math.max(...butterflies));
+                    butterflies[maxIndex] /= 2;
+                    break;
+
+                case 'rule2':
+                    const medianValue = median(butterflies);
+                    const medianIndex = butterflies.indexOf(medianValue);
+                    butterflies[medianIndex] /= 2;
+                    break;
+
+                case 'rule3':
+                    const medianValueMult = median(butterflies);
+                    const medianIndexMult = butterflies.indexOf(medianValueMult);
+                    butterflies[medianIndexMult] *= 2;
+                    break;
+
+                case 'rule4':
+                    const newButterflies = [];
+                    for (const size of butterflies) {
+                        newButterflies.push(size * 0.8);
+                        newButterflies.push(size * 1.25);
+                    }
+                    return newButterflies;
+
+                case 'rule5':
+                    const transformed = [];
+                    for (const size of butterflies) {
+                        transformed.push(size * 0.8, size * 1.25);
+                    }
+                    return transformed;
+
+                default:
+                    console.error('Règle non reconnue');
+            }
+            return butterflies;
+        }
+
+        /**
+         * Simulation principale
+         */
+        document.getElementById('simulationForm').addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            const numberOfButterflies = parseInt(document.getElementById('numberOfButterflies').value);
+            const ruleSelection = document.getElementById('ruleSelection').value;
+            const maxDays = parseInt(document.getElementById('maxDays').value);
+
+            let butterflies = Array(numberOfButterflies).fill(1);
+            let resultsHTML = `<h2>Résultats de la Simulation</h2><table><thead><tr><th>Jour</th><th>Envergures</th></tr></thead><tbody>`;
+
+            for (let day = 1; day <= maxDays; day++) {
+                butterflies = applyTransformationRule(butterflies, ruleSelection, day);
+                const medianValue = median(butterflies);
+                const rowHTML = butterflies
+                    .map(size => (size === medianValue ? `<strong>${size.toFixed(5)}</strong>` : size.toFixed(2)))
+                    .join(', ');
+                resultsHTML += `<tr><td>${day}</td><td>${rowHTML}</td></tr>`;
+
+                // Arrêter si toutes les envergures sont inférieures à 0.1
+                if (butterflies.every(size => size < 0.1)) {
+                    resultsHTML += `<tr><td colspan="2">Tous les papillons ont une envergure inférieure à 0.1 cm. Simulation terminée.</td></tr>`;
+                    break;
+                }
+            }
+
+
+            resultsHTML += `</tbody></table>`;
+            document.getElementById('results').innerHTML = resultsHTML;
+        });
+
+        loadFromLocalStorage();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,28 @@
+\section{Transformation de papillons}
+
+Pour embellir les différents tournois du TFJM$^2$, le comité national d'organisation décide de faire un élevage de $N$ papillons. À l'origine, le papillon numéro $i$ a une envergure égale à $x_i$ centimètres. Chaque jour, certains papillons subissent une transformation qui modifie leur envergure.
+
+\begin{enumerate}
+  \item Dans cette question uniquement, on suppose que tous les papillons ont une envergure initiale de $1\,\mathrm{cm}$.
+  \begin{enumerate}
+    \item Chaque jour, un des papillons d'envergure maximale voit son envergure être divisée par deux. Combien de temps faudra-t-il pour que tous les papillons aient une envergure strictement inférieure à $0,5\,\mathrm{cm}$ ? Et pour $0,1\,\mathrm{cm}$ ?
+    \item Supposons que $N$ est impair. Que se passe-t-il si la transformation divise par deux l'envergure d'un des papillons d'envergure médiane ?
+  \end{enumerate}
+
+  \item Supposons que $N$ est impair. Désormais, on suppose que les transformations alternent :
+  \begin{itemize}
+    \item La première transformation s'applique à l'un des papillons ayant une envergure médiane, qui perd alors la moitié de son envergure.
+    \item La seconde transformation s'applique à l'un des papillons ayant une envergure médiane, qui gagne alors la moitié de son envergure.
+  \end{itemize}
+  Est-il vrai que, pour tout $M \in \mathbb{R}$, que l'un des papillons va finir par dépasser la taille $M$ ?
+
+  \item Reprendre la question précédente si la seconde transformation multiplie l'envergure du papillon par $2$ à la place.
+
+  \item Chaque jour, chaque papillon se transforme en deux papillons : le premier hérite de $80\,\%$ de l'envergure du parent, et le second de $125\,\%$. Soit $x \in \mathbb{R}_+$. Estimer la proportion de papillons ayant une envergure supérieure à $x$ le $n$-ième jour.
+
+  \item Chaque jour, chaque papillon se transforme en deux papillons, ce qui augmente. Le premier hérite de $80\,\%$ de l'envergure de son parent, et le second de $125\,\%$ de l'envergure de son grand-parent. Puisqu'il n'y a pas de grand-parent à la première transformation, on supposera que le grand-parent a la même envergure que le parent. Soit $x \in \mathbb{R}_+$. Quelle est la proportion de papillons ayant une envergure strictement supérieure à $x$ le $n$-ième jour ? \textit{(On pourra commencer par regarder des valeurs particulières de $x$)}
+
+  \item Chaque jour, chaque papillon se transforme en deux papillons. Le pourcentage d'évolution de l'envergure des nouveaux papillons par rapport à leurs parents est tiré aléatoirement selon une loi de probabilité discrète fixée. Peut-on retrouver cette loi de probabilité en observant assez longtemps l'évolution des papillons ?
+
+  \item Proposer et étudier d'autres pistes de recherche.
+\end{enumerate}
